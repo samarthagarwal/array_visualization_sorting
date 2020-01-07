@@ -12,4 +12,4 @@ Check out the YouTube video here:
 
 ## Demo
 
-![A dmeo of the project](/Users/samarthagarwal/Desktop/Projects/array_visualization/demo.gif)
+![A dmeo of the project](./demo.gif)
