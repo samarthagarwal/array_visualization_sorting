@@ -8,7 +8,7 @@ A simple flutter experiment explaining how to render an array as colorful bars a
 - Quick Sort
 - Merge Sort
 
-Check out the YouTube video here: 
+Check out the YouTube video [here](https://youtu.be/IMK4yqlT24Q).
 
 ## Demo
 
