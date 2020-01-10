@@ -84,8 +84,8 @@ class _MyHomePageState extends State<MyHomePage> {
       for (int j = i + 1; j < _numbers.length; j++) {
         if (_numbers[i] > _numbers[j]) {
           int temp = _numbers[j];
-          _numbers[j] = _numbers[j + 1];
-          _numbers[j + 1] = temp;
+          _numbers[j] = _numbers[i];
+          _numbers[i] = temp;
         }
 
         await Future.delayed(_getDuration(), () {});
@@ -713,30 +713,32 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-      body: Container(
-        padding: const EdgeInsets.only(top: 0.0),
-        child: StreamBuilder<Object>(
-            initialData: _numbers,
-            stream: _streamController.stream,
-            builder: (context, snapshot) {
-              List<int> numbers = snapshot.data;
-              int counter = 0;
+      body: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.only(top: 0.0),
+          child: StreamBuilder<Object>(
+              initialData: _numbers,
+              stream: _streamController.stream,
+              builder: (context, snapshot) {
+                List<int> numbers = snapshot.data;
+                int counter = 0;
 
-              return Row(
-                children: numbers.map((int num) {
-                  counter++;
-                  return Container(
-                    child: CustomPaint(
-                      painter: BarPainter(
-                          index: counter,
-                          value: num,
-                          width:
-                              MediaQuery.of(context).size.width / _sampleSize),
-                    ),
-                  );
-                }).toList(),
-              );
-            }),
+                return Row(
+                  children: numbers.map((int num) {
+                    counter++;
+                    return Container(
+                      child: CustomPaint(
+                        painter: BarPainter(
+                            index: counter,
+                            value: num,
+                            width: MediaQuery.of(context).size.width /
+                                _sampleSize),
+                      ),
+                    );
+                  }).toList(),
+                );
+              }),
+        ),
       ),
       bottomNavigationBar: BottomAppBar(
         child: Row(
