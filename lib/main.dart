@@ -33,6 +33,8 @@ class _MyHomePageState extends State<MyHomePage> {
   bool isSorting = false;
   int speed = 0;
   static int duration = 1500;
+  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   Duration _getDuration() {
     return Duration(microseconds: duration);
   }
@@ -210,8 +212,7 @@ class _MyHomePageState extends State<MyHomePage> {
       List rightList = new List(rightSize);
 
       for (int i = 0; i < leftSize; i++) leftList[i] = _numbers[leftIndex + i];
-      for (int j = 0; j < rightSize; j++)
-        rightList[j] = _numbers[middleIndex + j + 1];
+      for (int j = 0; j < rightSize; j++) rightList[j] = _numbers[middleIndex + j + 1];
 
       int i = 0, j = 0;
       int k = leftIndex;
@@ -269,8 +270,7 @@ class _MyHomePageState extends State<MyHomePage> {
       for (int i = gap; i < _numbers.length; i += 1) {
         int temp = _numbers[i];
         int j;
-        for (j = i; j >= gap && _numbers[j - gap] > temp; j -= gap)
-          _numbers[j] = _numbers[j - gap];
+        for (j = i; j >= gap && _numbers[j - gap] > temp; j -= gap) _numbers[j] = _numbers[j - gap];
         _numbers[j] = temp;
         await Future.delayed(_getDuration());
         _streamController.add(_numbers);
@@ -563,8 +563,10 @@ class _MyHomePageState extends State<MyHomePage> {
       duration = 1500;
     } else {
       speed++;
+      duration = duration ~/ 2;
     }
-    duration = (duration ~/ pow(1.6, speed));
+
+    print(speed.toString() + " " + duration.toString());
     setState(() {});
   }
 
@@ -574,6 +576,9 @@ class _MyHomePageState extends State<MyHomePage> {
     });
 
     await _checkAndResetIfSorted();
+
+    Stopwatch stopwatch = new Stopwatch()..start();
+
     switch (_currentSortAlgo) {
       case "comb":
         await _combSort();
@@ -621,6 +626,17 @@ class _MyHomePageState extends State<MyHomePage> {
         await _mergeSort(0, _sampleSize.toInt() - 1);
         break;
     }
+
+    stopwatch.stop();
+
+    _scaffoldKey.currentState.removeCurrentSnackBar();
+    _scaffoldKey.currentState.showSnackBar(
+      SnackBar(
+        content: Text(
+          "Sorting completed in ${stopwatch.elapsed.inMilliseconds} ms.",
+        ),
+      ),
+    );
     setState(() {
       isSorting = false;
       isSorted = true;
@@ -636,6 +652,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Text(_getTitle()),
         backgroundColor: Color(0xFF0E4D64),
@@ -728,11 +745,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     counter++;
                     return Container(
                       child: CustomPaint(
-                        painter: BarPainter(
-                            index: counter,
-                            value: num,
-                            width: MediaQuery.of(context).size.width /
-                                _sampleSize),
+                        painter: BarPainter(index: counter, value: num, width: MediaQuery.of(context).size.width / _sampleSize),
                       ),
                     );
                   }).toList(),
@@ -752,9 +765,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             _setSortAlgo(_currentSortAlgo);
                           },
                     child: Text("RESET"))),
-            Expanded(
-                child: FlatButton(
-                    onPressed: isSorting ? null : _sort, child: Text("SORT"))),
+            Expanded(child: FlatButton(onPressed: isSorting ? null : _sort, child: Text("SORT"))),
             Expanded(
                 child: FlatButton(
                     onPressed: isSorting ? null : _changeSpeed,
@@ -804,8 +815,7 @@ class BarPainter extends CustomPainter {
     paint.strokeWidth = width;
     paint.strokeCap = StrokeCap.round;
 
-    canvas.drawLine(Offset(index * this.width, 0),
-        Offset(index * this.width, this.value.ceilToDouble()), paint);
+    canvas.drawLine(Offset(index * this.width, 0), Offset(index * this.width, this.value.ceilToDouble()), paint);
   }
 
   @override
