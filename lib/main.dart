@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -30,11 +29,14 @@ class _MyHomePageState extends State<MyHomePage> {
   StreamController<List<int>> _streamController = StreamController();
   String _currentSortAlgo = 'bubble';
   double _sampleSize = 320;
-  Duration _duration = Duration(milliseconds: 1);
+  bool isSorted = false;
+  bool isSorting = false;
+  int speed = 0;
+  static int duration = 1500;
+  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  @override
-  void initState() {
-    super.initState();
+  Duration _getDuration() {
+    return Duration(microseconds: duration);
   }
 
   @override
@@ -56,11 +58,27 @@ class _MyHomePageState extends State<MyHomePage> {
           _numbers[j + 1] = temp;
         }
 
-        await Future.delayed(_duration, () {});
+        await Future.delayed(_getDuration(), () {});
 
         _streamController.add(_numbers);
       }
     }
+  }
+
+  _recursiveBubbleSort(int n) async {
+    if (n == 1) {
+      return;
+    }
+    for (int i = 0; i < n - 1; i++) {
+      if (_numbers[i] > _numbers[i + 1]) {
+        int temp = _numbers[i];
+        _numbers[i] = _numbers[i + 1];
+        _numbers[i + 1] = temp;
+      }
+      await Future.delayed(_getDuration());
+      _streamController.add(_numbers);
+    }
+    await _recursiveBubbleSort(n - 1);
   }
 
   _selectionSort() async {
@@ -72,11 +90,43 @@ class _MyHomePageState extends State<MyHomePage> {
           _numbers[i] = temp;
         }
 
-        await Future.delayed(_duration, () {});
+        await Future.delayed(_getDuration(), () {});
 
         _streamController.add(_numbers);
       }
     }
+  }
+
+  _heapSort() async {
+    for (int i = _numbers.length ~/ 2; i >= 0; i--) {
+      await heapify(_numbers, _numbers.length, i);
+      _streamController.add(_numbers);
+    }
+    for (int i = _numbers.length - 1; i >= 0; i--) {
+      int temp = _numbers[0];
+      _numbers[0] = _numbers[i];
+      _numbers[i] = temp;
+      await heapify(_numbers, i, 0);
+      _streamController.add(_numbers);
+    }
+  }
+
+  heapify(List<int> arr, int n, int i) async {
+    int largest = i;
+    int l = 2 * i + 1;
+    int r = 2 * i + 2;
+
+    if (l < n && arr[l] > arr[largest]) largest = l;
+
+    if (r < n && arr[r] > arr[largest]) largest = r;
+
+    if (largest != i) {
+      int temp = _numbers[i];
+      _numbers[i] = _numbers[largest];
+      _numbers[largest] = temp;
+      heapify(arr, n, largest);
+    }
+    await Future.delayed(_getDuration());
   }
 
   _insertionSort() async {
@@ -86,12 +136,12 @@ class _MyHomePageState extends State<MyHomePage> {
       while (j >= 0 && temp < _numbers[j]) {
         _numbers[j + 1] = _numbers[j];
         --j;
-        await Future.delayed(_duration, () {});
+        await Future.delayed(_getDuration(), () {});
 
         _streamController.add(_numbers);
       }
       _numbers[j + 1] = temp;
-      await Future.delayed(_duration, () {});
+      await Future.delayed(_getDuration(), () {});
 
       _streamController.add(_numbers);
     }
@@ -109,60 +159,46 @@ class _MyHomePageState extends State<MyHomePage> {
 
   _quickSort(int leftIndex, int rightIndex) async {
     Future<int> _partition(int left, int right) async {
-      // pick a pivot value: the middle. other schemes use
-      // median of l[left], l[right] and l[middle]
       int p = (left + (right - left) / 2).toInt();
 
-      // move the pivot value to the far right
       var temp = _numbers[p];
       _numbers[p] = _numbers[right];
       _numbers[right] = temp;
-      await Future.delayed(_duration, () {});
+      await Future.delayed(_getDuration(), () {});
 
       _streamController.add(_numbers);
 
-      // the cursor is where we'll move values <= l[p] to:
-      // it starts on the left hand side
       int cursor = left;
 
-      // for every value
       for (int i = left; i < right; i++) {
-        // if it's less than the pivot
         if (cf(_numbers[i], _numbers[right]) <= 0) {
-          // move it to the left, swapped with the value that was
-          // there.
           var temp = _numbers[i];
           _numbers[i] = _numbers[cursor];
           _numbers[cursor] = temp;
           cursor++;
 
-          await Future.delayed(_duration, () {});
+          await Future.delayed(_getDuration(), () {});
 
           _streamController.add(_numbers);
         }
       }
 
-      // finally swap the pivot into place, so all values less
-      // than or equal to it are to its left
       temp = _numbers[right];
       _numbers[right] = _numbers[cursor];
       _numbers[cursor] = temp;
 
-      await Future.delayed(_duration, () {});
+      await Future.delayed(_getDuration(), () {});
 
       _streamController.add(_numbers);
 
-      // return the pivot index, to partition the list
       return cursor;
     }
 
-    // if there's any work left to do
     if (leftIndex < rightIndex) {
-      // pick a pivot and sort everything less than it its left
       int p = await _partition(leftIndex, rightIndex);
-      // sort the left partition
+
       await _quickSort(leftIndex, p - 1);
-      // sort the right partition
+
       await _quickSort(p + 1, rightIndex);
     }
   }
@@ -190,7 +226,7 @@ class _MyHomePageState extends State<MyHomePage> {
           j++;
         }
 
-        await Future.delayed(_duration, () {});
+        await Future.delayed(_getDuration(), () {});
         _streamController.add(_numbers);
 
         k++;
@@ -201,7 +237,7 @@ class _MyHomePageState extends State<MyHomePage> {
         i++;
         k++;
 
-        await Future.delayed(_duration, () {});
+        await Future.delayed(_getDuration(), () {});
         _streamController.add(_numbers);
       }
 
@@ -210,7 +246,7 @@ class _MyHomePageState extends State<MyHomePage> {
         j++;
         k++;
 
-        await Future.delayed(_duration, () {});
+        await Future.delayed(_getDuration(), () {});
         _streamController.add(_numbers);
       }
     }
@@ -221,7 +257,7 @@ class _MyHomePageState extends State<MyHomePage> {
       await _mergeSort(leftIndex, middleIndex);
       await _mergeSort(middleIndex + 1, rightIndex);
 
-      await Future.delayed(_duration, () {});
+      await Future.delayed(_getDuration(), () {});
 
       _streamController.add(_numbers);
 
@@ -229,45 +265,382 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  _resetAndSetSortAlgo(String type) {
-    setState(() {
-      _currentSortAlgo = type;
-    });
+  _shellSort() async {
+    for (int gap = _numbers.length ~/ 2; gap > 0; gap ~/= 2) {
+      for (int i = gap; i < _numbers.length; i += 1) {
+        int temp = _numbers[i];
+        int j;
+        for (j = i; j >= gap && _numbers[j - gap] > temp; j -= gap) _numbers[j] = _numbers[j - gap];
+        _numbers[j] = temp;
+        await Future.delayed(_getDuration());
+        _streamController.add(_numbers);
+      }
+    }
+  }
 
+  int getNextGap(int gap) {
+    gap = (gap * 10) ~/ 13;
+
+    if (gap < 1) return 1;
+    return gap;
+  }
+
+  _combSort() async {
+    int gap = _numbers.length;
+
+    bool swapped = true;
+
+    while (gap != 1 || swapped == true) {
+      gap = getNextGap(gap);
+
+      swapped = false;
+
+      for (int i = 0; i < _numbers.length - gap; i++) {
+        if (_numbers[i] > _numbers[i + gap]) {
+          int temp = _numbers[i];
+          _numbers[i] = _numbers[i + gap];
+          _numbers[i + gap] = temp;
+          swapped = true;
+        }
+        await Future.delayed(_getDuration());
+        _streamController.add(_numbers);
+      }
+    }
+  }
+
+  _pigeonHole() async {
+    int min = _numbers[0];
+    int max = _numbers[0];
+    int range, i, j, index;
+    for (int a = 0; a < _numbers.length; a++) {
+      if (_numbers[a] > max) max = _numbers[a];
+      if (_numbers[a] < min) min = _numbers[a];
+    }
+    range = max - min + 1;
+    List<int> phole = new List.generate(range, (i) => 0);
+
+    for (i = 0; i < _numbers.length; i++) {
+      phole[_numbers[i] - min]++;
+    }
+
+    index = 0;
+
+    for (j = 0; j < range; j++) {
+      while (phole[j]-- > 0) {
+        _numbers[index++] = j + min;
+        await Future.delayed(_getDuration());
+        _streamController.add(_numbers);
+      }
+    }
+  }
+
+  _cycleSort() async {
+    int writes = 0;
+    for (int cycleStart = 0; cycleStart <= _numbers.length - 2; cycleStart++) {
+      int item = _numbers[cycleStart];
+      int pos = cycleStart;
+      for (int i = cycleStart + 1; i < _numbers.length; i++) {
+        if (_numbers[i] < item) pos++;
+      }
+
+      if (pos == cycleStart) {
+        continue;
+      }
+
+      while (item == _numbers[pos]) {
+        pos += 1;
+      }
+
+      if (pos != cycleStart) {
+        int temp = item;
+        item = _numbers[pos];
+        _numbers[pos] = temp;
+        writes++;
+      }
+
+      while (pos != cycleStart) {
+        pos = cycleStart;
+        for (int i = cycleStart + 1; i < _numbers.length; i++) {
+          if (_numbers[i] < item) pos += 1;
+        }
+
+        while (item == _numbers[pos]) {
+          pos += 1;
+        }
+
+        if (item != _numbers[pos]) {
+          int temp = item;
+          item = _numbers[pos];
+          _numbers[pos] = temp;
+          writes++;
+        }
+        await Future.delayed(_getDuration());
+        _streamController.add(_numbers);
+      }
+    }
+  }
+
+  _cocktailSort() async {
+    bool swapped = true;
+    int start = 0;
+    int end = _numbers.length;
+
+    while (swapped == true) {
+      swapped = false;
+      for (int i = start; i < end - 1; ++i) {
+        if (_numbers[i] > _numbers[i + 1]) {
+          int temp = _numbers[i];
+          _numbers[i] = _numbers[i + 1];
+          _numbers[i + 1] = temp;
+          swapped = true;
+        }
+        await Future.delayed(_getDuration());
+        _streamController.add(_numbers);
+      }
+      if (swapped == false) break;
+      swapped = false;
+      end = end - 1;
+      for (int i = end - 1; i >= start; i--) {
+        if (_numbers[i] > _numbers[i + 1]) {
+          int temp = _numbers[i];
+          _numbers[i] = _numbers[i + 1];
+          _numbers[i + 1] = temp;
+          swapped = true;
+        }
+        await Future.delayed(_getDuration());
+        _streamController.add(_numbers);
+      }
+      start = start + 1;
+    }
+  }
+
+  _gnomeSort() async {
+    int index = 0;
+
+    while (index < _numbers.length) {
+      if (index == 0) index++;
+      if (_numbers[index] >= _numbers[index - 1])
+        index++;
+      else {
+        int temp = _numbers[index];
+        _numbers[index] = _numbers[index - 1];
+        _numbers[index - 1] = temp;
+
+        index--;
+      }
+      await Future.delayed(_getDuration());
+      _streamController.add(_numbers);
+    }
+    return;
+  }
+
+  _stoogesort(int l, int h) async {
+    if (l >= h) return;
+
+    if (_numbers[l] > _numbers[h]) {
+      int temp = _numbers[l];
+      _numbers[l] = _numbers[h];
+      _numbers[h] = temp;
+      await Future.delayed(_getDuration());
+      _streamController.add(_numbers);
+    }
+
+    if (h - l + 1 > 2) {
+      int t = (h - l + 1) ~/ 3;
+      await _stoogesort(l, h - t);
+      await _stoogesort(l + t, h);
+      await _stoogesort(l, h - t);
+    }
+  }
+
+  _oddEvenSort() async {
+    bool isSorted = false;
+
+    while (!isSorted) {
+      isSorted = true;
+
+      for (int i = 1; i <= _numbers.length - 2; i = i + 2) {
+        if (_numbers[i] > _numbers[i + 1]) {
+          int temp = _numbers[i];
+          _numbers[i] = _numbers[i + 1];
+          _numbers[i + 1] = temp;
+          isSorted = false;
+          await Future.delayed(_getDuration());
+          _streamController.add(_numbers);
+        }
+      }
+
+      for (int i = 0; i <= _numbers.length - 2; i = i + 2) {
+        if (_numbers[i] > _numbers[i + 1]) {
+          int temp = _numbers[i];
+          _numbers[i] = _numbers[i + 1];
+          _numbers[i + 1] = temp;
+          isSorted = false;
+          await Future.delayed(_getDuration());
+          _streamController.add(_numbers);
+        }
+      }
+    }
+
+    return;
+  }
+
+  _reset() {
+    isSorted = false;
     _numbers = [];
     for (int i = 0; i < _sampleSize; ++i) {
       _numbers.add(Random().nextInt(500));
     }
-
     _streamController.add(_numbers);
   }
 
-  String _getTitle() {
-    if (_currentSortAlgo == 'bubble') {
-      return "Bubble Sort";
-    } else if (_currentSortAlgo == "selection") {
-      return "Selection Sort";
-    } else if (_currentSortAlgo == "insertion") {
-      return "Insertion Sort";
-    } else if (_currentSortAlgo == "quick") {
-      return "Quick Sort";
-    } else if (_currentSortAlgo == "merge") {
-      return "Merge Sort";
+  _setSortAlgo(String type) {
+    setState(() {
+      _currentSortAlgo = type;
+    });
+  }
+
+  _checkAndResetIfSorted() async {
+    if (isSorted) {
+      _reset();
+      await Future.delayed(Duration(milliseconds: 200));
     }
   }
 
-  _sort() {
-    if (_currentSortAlgo == 'bubble') {
-      _bubbleSort();
-    } else if (_currentSortAlgo == "selection") {
-      _selectionSort();
-    } else if (_currentSortAlgo == "insertion") {
-      _insertionSort();
-    } else if (_currentSortAlgo == "quick") {
-      _quickSort(0, _sampleSize.toInt() - 1);
-    } else if (_currentSortAlgo == "merge") {
-      _mergeSort(0, _sampleSize.toInt() - 1);
+  String _getTitle() {
+    switch (_currentSortAlgo) {
+      case "bubble":
+        return "Bubble Sort";
+        break;
+      case "coctail":
+        return "Coctail Sort";
+        break;
+      case "pigeonhole":
+        return "Pigeonhole Sort";
+        break;
+      case "recursivebubble":
+        return "Recursive Bubble Sort";
+        break;
+      case "heap":
+        return "Heap Sort";
+        break;
+      case "selection":
+        return "Selection Sort";
+        break;
+      case "insertion":
+        return "Insertion Sort";
+        break;
+      case "quick":
+        return "Quick Sort";
+        break;
+      case "merge":
+        return "Merge Sort";
+        break;
+      case "shell":
+        return "Shell Sort";
+        break;
+      case "comb":
+        return "Comb Sort";
+        break;
+      case "cycle":
+        return "Cycle Sort";
+        break;
+      case "gnome":
+        return "Gnome Sort";
+        break;
+      case "stooge":
+        return "Stooge Sort";
+        break;
+      case "oddeven":
+        return "Odd Even Sort";
+        break;
     }
+  }
+
+  _changeSpeed() {
+    if (speed >= 3) {
+      speed = 0;
+      duration = 1500;
+    } else {
+      speed++;
+      duration = duration ~/ 2;
+    }
+
+    print(speed.toString() + " " + duration.toString());
+    setState(() {});
+  }
+
+  _sort() async {
+    setState(() {
+      isSorting = true;
+    });
+
+    await _checkAndResetIfSorted();
+
+    Stopwatch stopwatch = new Stopwatch()..start();
+
+    switch (_currentSortAlgo) {
+      case "comb":
+        await _combSort();
+        break;
+      case "coctail":
+        await _cocktailSort();
+        break;
+      case "bubble":
+        await _bubbleSort();
+        break;
+      case "pigeonhole":
+        await _pigeonHole();
+        break;
+      case "shell":
+        await _shellSort();
+        break;
+      case "recursivebubble":
+        await _recursiveBubbleSort(_sampleSize.toInt() - 1);
+        break;
+      case "selection":
+        await _selectionSort();
+        break;
+      case "cycle":
+        await _cycleSort();
+        break;
+      case "heap":
+        await _heapSort();
+        break;
+      case "insertion":
+        await _insertionSort();
+        break;
+      case "gnome":
+        await _gnomeSort();
+        break;
+      case "oddeven":
+        await _oddEvenSort();
+        break;
+      case "stooge":
+        await _stoogesort(0, _sampleSize.toInt() - 1);
+        break;
+      case "quick":
+        await _quickSort(0, _sampleSize.toInt() - 1);
+        break;
+      case "merge":
+        await _mergeSort(0, _sampleSize.toInt() - 1);
+        break;
+    }
+
+    stopwatch.stop();
+
+    _scaffoldKey.currentState.removeCurrentSnackBar();
+    _scaffoldKey.currentState.showSnackBar(
+      SnackBar(
+        content: Text(
+          "Sorting completed in ${stopwatch.elapsed.inMilliseconds} ms.",
+        ),
+      ),
+    );
+    setState(() {
+      isSorting = false;
+      isSorted = true;
+    });
   }
 
   @override
@@ -279,6 +652,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Text(_getTitle()),
         backgroundColor: Color(0xFF0E4D64),
@@ -290,6 +664,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 PopupMenuItem(
                   value: 'bubble',
                   child: Text("Bubble Sort"),
+                ),
+                PopupMenuItem(
+                  value: 'recursivebubble',
+                  child: Text("Recursive Bubble Sort"),
+                ),
+                PopupMenuItem(
+                  value: 'heap',
+                  child: Text("Heap Sort"),
                 ),
                 PopupMenuItem(
                   value: 'selection',
@@ -307,40 +689,90 @@ class _MyHomePageState extends State<MyHomePage> {
                   value: 'merge',
                   child: Text("Merge Sort"),
                 ),
+                PopupMenuItem(
+                  value: 'shell',
+                  child: Text("Shell Sort"),
+                ),
+                PopupMenuItem(
+                  value: 'comb',
+                  child: Text("Comb Sort"),
+                ),
+                PopupMenuItem(
+                  value: 'pigeonhole',
+                  child: Text("Pigeonhole Sort"),
+                ),
+                PopupMenuItem(
+                  value: 'cycle',
+                  child: Text("Cycle Sort"),
+                ),
+                PopupMenuItem(
+                  value: 'coctail',
+                  child: Text("Coctail Sort"),
+                ),
+                PopupMenuItem(
+                  value: 'gnome',
+                  child: Text("Gnome Sort"),
+                ),
+                PopupMenuItem(
+                  value: 'stooge',
+                  child: Text("Stooge Sort"),
+                ),
+                PopupMenuItem(
+                  value: 'oddeven',
+                  child: Text("Odd Even Sort"),
+                ),
               ];
             },
             onSelected: (String value) {
-              _resetAndSetSortAlgo(value);
+              _reset();
+              _setSortAlgo(value);
             },
           ),
         ],
       ),
-      body: Container(
-        padding: const EdgeInsets.only(top: 0.0),
-        child: StreamBuilder<Object>(
-            initialData: _numbers,
-            stream: _streamController.stream,
-            builder: (context, snapshot) {
-              List<int> numbers = snapshot.data;
-              int counter = 0;
+      body: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.only(top: 0.0),
+          child: StreamBuilder<Object>(
+              initialData: _numbers,
+              stream: _streamController.stream,
+              builder: (context, snapshot) {
+                List<int> numbers = snapshot.data;
+                int counter = 0;
 
-              return Row(
-                children: numbers.map((int num) {
-                  counter++;
-                  return Container(
-                    child: CustomPaint(
-                      painter: BarPainter(index: counter, value: num, width: MediaQuery.of(context).size.width / _sampleSize),
-                    ),
-                  );
-                }).toList(),
-              );
-            }),
+                return Row(
+                  children: numbers.map((int num) {
+                    counter++;
+                    return Container(
+                      child: CustomPaint(
+                        painter: BarPainter(index: counter, value: num, width: MediaQuery.of(context).size.width / _sampleSize),
+                      ),
+                    );
+                  }).toList(),
+                );
+              }),
+        ),
       ),
       bottomNavigationBar: BottomAppBar(
         child: Row(
           children: <Widget>[
-            Expanded(child: FlatButton(onPressed: () => _resetAndSetSortAlgo(_currentSortAlgo), child: Text("RESET"))),
-            Expanded(child: FlatButton(onPressed: _sort, child: Text("SORT"))),
+            Expanded(
+                child: FlatButton(
+                    onPressed: isSorting
+                        ? null
+                        : () {
+                            _reset();
+                            _setSortAlgo(_currentSortAlgo);
+                          },
+                    child: Text("RESET"))),
+            Expanded(child: FlatButton(onPressed: isSorting ? null : _sort, child: Text("SORT"))),
+            Expanded(
+                child: FlatButton(
+                    onPressed: isSorting ? null : _changeSpeed,
+                    child: Text(
+                      "${speed + 1}x",
+                      style: TextStyle(fontSize: 20),
+                    ))),
           ],
         ),
       ),
