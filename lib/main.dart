@@ -1,3 +1,5 @@
+// ignore_for_file: dead_code
+
 import 'dart:async';
 import 'dart:math';
 
@@ -208,8 +210,8 @@ class _MyHomePageState extends State<MyHomePage> {
       int leftSize = middleIndex - leftIndex + 1;
       int rightSize = rightIndex - middleIndex;
 
-      List leftList = new List(leftSize);
-      List rightList = new List(rightSize);
+      List leftList = List.filled(leftSize, 0);
+      List rightList = List.filled(rightSize, 0);
 
       for (int i = 0; i < leftSize; i++) leftList[i] = _numbers[leftIndex + i];
       for (int j = 0; j < rightSize; j++) rightList[j] = _numbers[middleIndex + j + 1];
@@ -335,7 +337,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _cycleSort() async {
-    int writes = 0;
     for (int cycleStart = 0; cycleStart <= _numbers.length - 2; cycleStart++) {
       int item = _numbers[cycleStart];
       int pos = cycleStart;
@@ -355,7 +356,6 @@ class _MyHomePageState extends State<MyHomePage> {
         int temp = item;
         item = _numbers[pos];
         _numbers[pos] = temp;
-        writes++;
       }
 
       while (pos != cycleStart) {
@@ -372,7 +372,6 @@ class _MyHomePageState extends State<MyHomePage> {
           int temp = item;
           item = _numbers[pos];
           _numbers[pos] = temp;
-          writes++;
         }
         await Future.delayed(_getDuration());
         _streamController.add(_numbers);
@@ -511,7 +510,6 @@ class _MyHomePageState extends State<MyHomePage> {
     switch (_currentSortAlgo) {
       case "bubble":
         return "Bubble Sort";
-        break;
       case "coctail":
         return "Coctail Sort";
         break;
@@ -554,6 +552,8 @@ class _MyHomePageState extends State<MyHomePage> {
       case "oddeven":
         return "Odd Even Sort";
         break;
+      default:
+        return "Bubble Sort";
     }
   }
 
@@ -629,14 +629,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
     stopwatch.stop();
 
-    _scaffoldKey.currentState.removeCurrentSnackBar();
-    _scaffoldKey.currentState.showSnackBar(
-      SnackBar(
-        content: Text(
-          "Sorting completed in ${stopwatch.elapsed.inMilliseconds} ms.",
-        ),
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(
+        "Sorted ${_sampleSize.toInt()} elements in ${stopwatch.elapsed.inMilliseconds} milliseconds",
       ),
-    );
+      backgroundColor: Color(0xFF0E4D64),
+      duration: Duration(milliseconds: 1500),
+    ));
     setState(() {
       isSorting = false;
       isSorted = true;
@@ -657,77 +656,93 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(_getTitle()),
         backgroundColor: Color(0xFF0E4D64),
         actions: <Widget>[
-          PopupMenuButton<String>(
-            initialValue: _currentSortAlgo,
-            itemBuilder: (ctx) {
-              return [
-                PopupMenuItem(
-                  value: 'bubble',
-                  child: Text("Bubble Sort"),
+          isSorting
+              ? Row(
+                  children: [
+                    SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                        strokeWidth: 2,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 10,
+                    ),
+                  ],
+                )
+              : PopupMenuButton<String>(
+                  initialValue: _currentSortAlgo,
+                  itemBuilder: (ctx) {
+                    return [
+                      PopupMenuItem(
+                        value: 'bubble',
+                        child: Text("Bubble Sort"),
+                      ),
+                      PopupMenuItem(
+                        value: 'recursivebubble',
+                        child: Text("Recursive Bubble Sort"),
+                      ),
+                      PopupMenuItem(
+                        value: 'heap',
+                        child: Text("Heap Sort"),
+                      ),
+                      PopupMenuItem(
+                        value: 'selection',
+                        child: Text("Selection Sort"),
+                      ),
+                      PopupMenuItem(
+                        value: 'insertion',
+                        child: Text("Insertion Sort"),
+                      ),
+                      PopupMenuItem(
+                        value: 'quick',
+                        child: Text("Quick Sort"),
+                      ),
+                      PopupMenuItem(
+                        value: 'merge',
+                        child: Text("Merge Sort"),
+                      ),
+                      PopupMenuItem(
+                        value: 'shell',
+                        child: Text("Shell Sort"),
+                      ),
+                      PopupMenuItem(
+                        value: 'comb',
+                        child: Text("Comb Sort"),
+                      ),
+                      PopupMenuItem(
+                        value: 'pigeonhole',
+                        child: Text("Pigeonhole Sort"),
+                      ),
+                      PopupMenuItem(
+                        value: 'cycle',
+                        child: Text("Cycle Sort"),
+                      ),
+                      PopupMenuItem(
+                        value: 'coctail',
+                        child: Text("Coctail Sort"),
+                      ),
+                      PopupMenuItem(
+                        value: 'gnome',
+                        child: Text("Gnome Sort"),
+                      ),
+                      PopupMenuItem(
+                        value: 'stooge',
+                        child: Text("Stooge Sort"),
+                      ),
+                      PopupMenuItem(
+                        value: 'oddeven',
+                        child: Text("Odd Even Sort"),
+                      ),
+                    ];
+                  },
+                  onSelected: (String value) {
+                    _reset();
+                    _setSortAlgo(value);
+                  },
                 ),
-                PopupMenuItem(
-                  value: 'recursivebubble',
-                  child: Text("Recursive Bubble Sort"),
-                ),
-                PopupMenuItem(
-                  value: 'heap',
-                  child: Text("Heap Sort"),
-                ),
-                PopupMenuItem(
-                  value: 'selection',
-                  child: Text("Selection Sort"),
-                ),
-                PopupMenuItem(
-                  value: 'insertion',
-                  child: Text("Insertion Sort"),
-                ),
-                PopupMenuItem(
-                  value: 'quick',
-                  child: Text("Quick Sort"),
-                ),
-                PopupMenuItem(
-                  value: 'merge',
-                  child: Text("Merge Sort"),
-                ),
-                PopupMenuItem(
-                  value: 'shell',
-                  child: Text("Shell Sort"),
-                ),
-                PopupMenuItem(
-                  value: 'comb',
-                  child: Text("Comb Sort"),
-                ),
-                PopupMenuItem(
-                  value: 'pigeonhole',
-                  child: Text("Pigeonhole Sort"),
-                ),
-                PopupMenuItem(
-                  value: 'cycle',
-                  child: Text("Cycle Sort"),
-                ),
-                PopupMenuItem(
-                  value: 'coctail',
-                  child: Text("Coctail Sort"),
-                ),
-                PopupMenuItem(
-                  value: 'gnome',
-                  child: Text("Gnome Sort"),
-                ),
-                PopupMenuItem(
-                  value: 'stooge',
-                  child: Text("Stooge Sort"),
-                ),
-                PopupMenuItem(
-                  value: 'oddeven',
-                  child: Text("Odd Even Sort"),
-                ),
-              ];
-            },
-            onSelected: (String value) {
-              _reset();
-              _setSortAlgo(value);
-            },
-          ),
         ],
       ),
       body: SafeArea(
@@ -737,7 +752,11 @@ class _MyHomePageState extends State<MyHomePage> {
               initialData: _numbers,
               stream: _streamController.stream,
               builder: (context, snapshot) {
-                List<int> numbers = snapshot.data;
+                if (snapshot.data == null) {
+                  return Container();
+                }
+
+                List<int> numbers = snapshot.data as List<int>;
                 int counter = 0;
 
                 return Row(
@@ -755,24 +774,60 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       bottomNavigationBar: BottomAppBar(
         child: Row(
-          children: <Widget>[
+          children: [
+            SizedBox(
+              width: 10,
+            ),
             Expanded(
-                child: FlatButton(
-                    onPressed: isSorting
-                        ? null
-                        : () {
-                            _reset();
-                            _setSortAlgo(_currentSortAlgo);
-                          },
-                    child: Text("RESET"))),
-            Expanded(child: FlatButton(onPressed: isSorting ? null : _sort, child: Text("SORT"))),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF0E4D64),
+                ),
+                onPressed: isSorting
+                    ? null
+                    : () {
+                        _reset();
+                        _setSortAlgo(_currentSortAlgo);
+                      },
+                child: Text(
+                  "RESET",
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 5,
+            ),
             Expanded(
-                child: FlatButton(
-                    onPressed: isSorting ? null : _changeSpeed,
-                    child: Text(
-                      "${speed + 1}x",
-                      style: TextStyle(fontSize: 20),
-                    ))),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF0E4D64),
+                ),
+                onPressed: isSorting ? null : _sort,
+                child: Text(
+                  "SORT",
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 5,
+            ),
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF0E4D64),
+                ),
+                onPressed: isSorting ? null : _changeSpeed,
+                child: Text(
+                  "${speed + 1}x",
+                  style: TextStyle(
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 10,
+            ),
           ],
         ),
       ),
@@ -785,7 +840,11 @@ class BarPainter extends CustomPainter {
   final int value;
   final int index;
 
-  BarPainter({this.width, this.value, this.index});
+  BarPainter({
+    required this.width,
+    required this.value,
+    required this.index,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
